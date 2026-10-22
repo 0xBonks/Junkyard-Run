@@ -6,6 +6,8 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float gravity = -20f;
+    [SerializeField] private float pushForce = 30f;
+    [SerializeField] private float cartPushAcceleration = 8f;
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private float mouseSensitivity = 0.1f;
     [SerializeField] private float minPitch = -30f;
@@ -86,6 +88,28 @@ public class PlayerMovement : MonoBehaviour
 
         verticalSpeed += gravity * Time.deltaTime;
         controller.Move(Vector3.up * verticalSpeed * Time.deltaTime);
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        Rigidbody body = hit.collider.attachedRigidbody;
+        if (body == null || body.isKinematic)
+            return;
+
+        Vector3 pushDirection = hit.moveDirection;
+        pushDirection.y = 0f;
+        if (pushDirection.sqrMagnitude < 0.001f)
+            return;
+
+        bool isCart = hit.collider.GetComponentInParent<CartCargo>() != null;
+        float pushStrength = isCart ? cartPushAcceleration : pushForce;
+        ForceMode forceMode = isCart ? ForceMode.Acceleration : ForceMode.Force;
+
+        body.AddForceAtPosition(
+            pushDirection.normalized * pushStrength,
+            hit.point,
+            forceMode
+        );
     }
 
     private void SetCursorLocked(bool locked)

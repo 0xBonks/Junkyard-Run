@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -6,7 +7,11 @@ public class CartCargo : MonoBehaviour
     [SerializeField, Range(1, 3)] private int capacity = 3;
     [SerializeField] private TMP_Text cargoCountText;
 
-    private int cargoCount;
+    private readonly List<NetProjectile> cargoBags = new List<NetProjectile>();
+    private int bankedBagCount;
+
+    public int CargoCount => cargoBags.Count;
+    public int BankedBagCount => bankedBagCount;
 
     private void Start()
     {
@@ -20,7 +25,7 @@ public class CartCargo : MonoBehaviour
         if (bag == null || !bag.IsCaughtBag)
             return;
 
-        if (cargoCount >= capacity)
+        if (CargoCount >= capacity)
         {
             Debug.Log("Cart is full.");
             return;
@@ -39,11 +44,29 @@ public class CartCargo : MonoBehaviour
         bagCollider.enabled = false;
 
         bag.transform.SetParent(transform, true);
-        bag.transform.localPosition = GetSlotPosition(cargoCount);
+        bag.transform.localPosition = GetSlotPosition(CargoCount);
         bag.transform.localRotation = Quaternion.identity;
 
-        cargoCount++;
+        cargoBags.Add(bag);
         UpdateCounter();
+    }
+
+    public int BankCargo()
+    {
+        int bagsToBank = cargoBags.Count;
+        if (bagsToBank == 0)
+            return 0;
+
+        foreach (NetProjectile bag in cargoBags)
+        {
+            if (bag != null)
+                Destroy(bag.gameObject);
+        }
+
+        cargoBags.Clear();
+        bankedBagCount += bagsToBank;
+        UpdateCounter();
+        return bagsToBank;
     }
 
     private Vector3 GetSlotPosition(int index)
@@ -59,6 +82,6 @@ public class CartCargo : MonoBehaviour
     private void UpdateCounter()
     {
         if (cargoCountText != null)
-            cargoCountText.text = $"CARGO {cargoCount}/{capacity}";
+            cargoCountText.text = $"CARGO {CargoCount}/{capacity} | BANKED {bankedBagCount}";
     }
 }

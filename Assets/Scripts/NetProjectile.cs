@@ -22,36 +22,49 @@ public class NetProjectile : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-
-        if (caughtScrap || !collision.collider.CompareTag("Scrap"))
+        if (caughtScrap)
             return;
 
-        GameObject scrap = collision.collider.gameObject;
-
-        caughtScrap = true;
-
-        Rigidbody scrapBody = scrap.GetComponent<Rigidbody>();
-        if (scrapBody != null)
+        ScrapThief thief = collision.collider.GetComponentInParent<ScrapThief>();
+        if (thief != null)
         {
-            scrapBody.isKinematic = true;
-            scrapBody.detectCollisions = false;
-            Destroy(scrapBody);
+            GameObject recoveredScrap = thief.TakeStolenScrapForNet();
+            if (recoveredScrap != null)
+                CatchScrap(recoveredScrap);
+            return;
         }
 
-        foreach (Collider itemCollider in scrap.GetComponents<Collider>())
-            itemCollider.enabled = false;
+        if (collision.collider.CompareTag("Scrap"))
+            CatchScrap(collision.collider.gameObject);
+    }
 
+    private void CatchScrap(GameObject scrap)
+    {
+        caughtScrap = true;
         transform.localScale = Vector3.one * bagScale;
 
-        scrap.transform.SetParent(transform, true);
         Rigidbody bagBody = GetComponent<Rigidbody>();
         if (bagBody != null)
         {
             bagBody.linearVelocity = Vector3.zero;
             bagBody.angularVelocity = Vector3.zero;
         }
+
+        Rigidbody scrapBody = scrap.GetComponent<Rigidbody>();
+        if (scrapBody != null)
+        {
+            scrapBody.linearVelocity = Vector3.zero;
+            scrapBody.angularVelocity = Vector3.zero;
+            scrapBody.isKinematic = true;
+            scrapBody.detectCollisions = false;
+            Destroy(scrapBody);
+        }
+
+        foreach (Collider itemCollider in scrap.GetComponentsInChildren<Collider>())
+            itemCollider.enabled = false;
+
+        scrap.transform.SetParent(transform, true);
         scrap.transform.position = transform.position;
         scrap.transform.rotation = transform.rotation;
     }
-
 }

@@ -59,6 +59,16 @@ public class NetLauncher : MonoBehaviour
         UpdateNetCount();
     }
 
+    public bool RefillNets()
+    {
+        if (netsRemaining >= maxNets)
+            return false;
+
+        netsRemaining = maxNets;
+        UpdateNetCount();
+        return true;
+    }
+
     private void UpdateNetCount()
     {
         if (netCountText != null)
